@@ -7,6 +7,7 @@ from kitty.tab_bar import (
     ExtraData,
     TabBarData,
     as_rgb,
+    draw_title
 )
 
 opts = get_options()
@@ -66,10 +67,34 @@ def draw_tab(
             r,g,b = extract_rgb(base)
             base_color = Color(r,g,b)
 
-            file.write(f'Active tab color: {output}')
+            # file.write(f'Active tab color: {output}')
             new_draw_data = draw_data._replace(inactive_bg=base_color)
             # file.write(f'Drawing with new color:\t{str(new_draw_data.inactive_bg.rgb)}\n')
-            draw_tab_with_separator(new_draw_data, screen, tab, before, max_title_length, index, is_last, extra_data)
+            file.write(f'active_fg: {new_draw_data.active_fg}\n')
+
+            # if tab.is_active:
+            #     active_tab_layout_name = tab.layout_name
+            #     active_tab_num_windows = tab.num_windows
+            #
+            # if index == 1:
+            #     _draw_left_status(screen)
+
+            draw_tab_with_separator(new_draw_data, screen, tab, before, max_title_length, index, is_last, extra_data, base)
+            # if is_last:
+            #     screen_cursor_x = screen.cursor.x
+            #     center_status_length = screen_cursor_x - left_status_length
+            #     leading_spaces = math.ceil(
+            #         (screen.columns - left_status_length * 2 - center_status_length) / 2
+            #     )
+            #     screen.cursor.x = left_status_length
+            #     screen.insert_characters(leading_spaces)
+            #     # TODO: fix tab click handlers
+            #     # self.cell_ranges = [(s + leading_spaces, e + leading_spaces) for (s, e) in self.cell_ranges]
+            #     screen.cursor.x = screen_cursor_x + leading_spaces
+            #
+            # if is_last:
+            #     _draw_right_status(screen, is_last)
+
 
             # draw_data.inactive_bg = base_color
 
@@ -89,28 +114,6 @@ def draw_tab(
              file.write(f"Error: {e}\n")
 
 
-    # if tab.is_active:
-    #     active_tab_layout_name = tab.layout_name
-    #     active_tab_num_windows = tab.num_windows
-    #
-    # if index == 1:
-    #     _draw_left_status(screen)
-
-    # calculate and insert leading spaces to separate tabs from left status
-    # if is_last:
-    #     screen_cursor_x = screen.cursor.x
-    #     center_status_length = screen_cursor_x - left_status_length
-    #     leading_spaces = math.ceil(
-    #         (screen.columns - left_status_length * 2 - center_status_length) / 2
-    #     )
-    #     screen.cursor.x = left_status_length
-    #     screen.insert_characters(leading_spaces)
-    #     # TODO: fix tab click handlers
-    #     # self.cell_ranges = [(s + leading_spaces, e + leading_spaces) for (s, e) in self.cell_ranges]
-    #     screen.cursor.x = screen_cursor_x + leading_spaces
-    #
-    # if is_last:
-    #     _draw_right_status(screen, is_last)
 
     return screen.cursor.x
 
@@ -242,15 +245,39 @@ def extract_rgb(hex_color: int):
 def draw_tab_with_separator(
     draw_data: DrawData, screen: Screen, tab: TabBarData,
     before: int, max_tab_length: int, index: int, is_last: bool,
-    extra_data: ExtraData
+    extra_data: ExtraData,
+    background: int
 ) -> int:
-    screen.cursor.bg = as_rgb(draw_data.inactive_bg.rgb)
-    screen.cursor.fg = 0
+    screen.cursor.bg = background
+    screen.cursor.fg = as_rgb(draw_data.active_fg.rgb)
     # screen.cursor.bold = screen.cursor.italic = False
     if draw_data.leading_spaces:
         screen.draw(' ' * draw_data.leading_spaces)
-    # draw_title(draw_data, screen, tab, index, max_tab_length)
-    screen.draw(str(index))
+
+
+    if tab.is_active:
+        screen.cursor.bg = background
+        screen.cursor.fg = as_rgb(draw_data.active_bg.rgb)
+        screen.draw('')
+        screen.cursor.bg = as_rgb(draw_data.active_bg.rgb)
+        screen.cursor.fg = as_rgb(draw_data.active_fg.rgb)
+    else:
+        screen.cursor.bg = as_rgb(draw_data.inactive_bg.rgb)
+        screen.cursor.fg = as_rgb(draw_data.inactive_fg.rgb)
+
+    
+    draw_title(draw_data, screen, tab, index, max_tab_length)
+
+    if tab.is_active:
+        screen.cursor.bg = background
+        screen.cursor.fg = as_rgb(draw_data.active_bg.rgb)
+        screen.draw('')
+        screen.cursor.bg = background
+        screen.cursor.fg = as_rgb(draw_data.active_fg.rgb)
+    else:
+        screen.cursor.bg = background
+        screen.cursor.fg = as_rgb(draw_data.inactive_fg.rgb)
+
 
     trailing_spaces = min(max_tab_length - 1, draw_data.trailing_spaces)
     max_tab_length -= trailing_spaces
@@ -264,4 +291,10 @@ def draw_tab_with_separator(
     if not is_last:
         # screen.cursor.bg = as_rgb(color_as_int(draw_data.inactive_bg))
         screen.draw(draw_data.sep)
+
+    # if is_last:
+    #     screen.draw(' ' * (screen.columns - screen.cursor.x))
+
     return end
+
+
