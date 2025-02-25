@@ -118,65 +118,78 @@ def draw_tab(
 
     return screen.cursor.x
 
-def draw_tab_with_separator(
-    draw_data: DrawData, screen: Screen, tab: TabBarData,
-    before: int, max_tab_length: int, index: int, is_last: bool,
-    extra_data: ExtraData,
-    background: int
-) -> int:
-    screen.cursor.bg = background
-    screen.cursor.fg = as_rgb(draw_data.active_fg.rgb)
-    screen.cursor.bold = screen.cursor.italic = False
 
-    if index==1:
-        screen.draw(draw_data.sep)
-    
+def _draw_left_status(screen: Screen):
+    global left_status_length
     with open(file_path, "a") as file:
         # Write the desired content to the file
-        file.write(f'Background: {background}\n')
-        file.write(f'%HOME= : {os.getenv("HOME")}\n')
+        file.write("Draw left status\n")
+        file.write("Base in draw_left")
+
+    cwd = get_cwd()
+    cells = [
+        (surface1, base, cwd),
+    ]
+
+    left_status_length = 0
+    for _, _, cell in cells:
+        left_status_length += len(cell)
+
+    # draw right status
+    for fg, bg, cell in cells:
+        screen.cursor.fg = fg
+        screen.cursor.bg = bg
+        screen.draw(cell)
+    screen.cursor.fg = 0
+    screen.cursor.bg = 0
+
+    # update cursor position
+    screen.cursor.x = left_status_length
+    return screen.cursor.x
 
 
-    if tab.is_active:
-        screen.cursor.bg = background
-        screen.cursor.fg = as_rgb(draw_data.active_bg.rgb)
-        screen.draw('')
-        screen.cursor.bg = as_rgb(draw_data.active_bg.rgb)
-        screen.cursor.fg = as_rgb(draw_data.active_fg.rgb)
-    else:
-        screen.cursor.bg = as_rgb(draw_data.inactive_bg.rgb)
-        screen.cursor.fg = as_rgb(draw_data.inactive_fg.rgb)
+def _draw_right_status(screen: Screen, is_last: bool) -> int:
+    with open(file_path, "a") as file:
+        # Write the desired content to the file
+        file.write("Draw right status\n")
+    layout_fg = surface1 if active_tab_layout_name == "fat" else lavender
+    cells = [
+        # layout name
+        (layout_fg, base, " " + layout_icon + " "),
+        (layout_fg, base, active_tab_layout_name + " "),
+        # num windows
+        (surface1, base, " " + window_icon + " "),
+        (surface1, base, str(active_tab_num_windows)),
+    ]
 
-    
-    draw_title(draw_data, screen, tab, index, max_tab_length)
+    # calculate leading spaces to separate tabs from right status
+    right_status_length = 0
+    for _, _, cell in cells:
+        right_status_length += len(cell)
+    leading_spaces = 0
+    if opts.tab_bar_align == "center":
+        leading_spaces = (
+            math.ceil((screen.columns - screen.cursor.x) / 2) - right_status_length
+        )
+    elif opts.tab_bar_align == "left":
+        leading_spaces = screen.columns - screen.cursor.x - right_status_length
 
-    if tab.is_active:
-        screen.cursor.bg = background
-        screen.cursor.fg = as_rgb(draw_data.active_bg.rgb)
-        screen.draw('')
-        screen.cursor.bg = background
-        screen.cursor.fg = as_rgb(draw_data.active_fg.rgb)
-    else:
-        screen.cursor.bg = background
-        screen.cursor.fg = as_rgb(draw_data.inactive_fg.rgb)
+    # draw leading spaces
+    if leading_spaces > 0:
+        screen.draw(" " * leading_spaces)
 
+    # draw right status
+    for fg, bg, cell in cells:
+        screen.cursor.fg = fg
+        screen.cursor.bg = bg
+        screen.draw(cell)
+    screen.cursor.fg = 0
+    screen.cursor.bg = 0
 
+    # update cursor position
+    screen.cursor.x = max(screen.cursor.x, screen.columns - right_status_length)
+    return screen.cursor.x
 
-    if not is_last:
-        screen.draw(draw_data.sep)
-
-    if is_last:
-        remaining_size = screen.columns - screen.cursor.x
-        cwd = truncate_str(get_cwd() + draw_data.sep , remaining_size) 
-
-        screen.cursor.bg = background
-        screen.cursor.fg = as_rgb(draw_data.inactive_fg.rgb)
-        screen.cursor.bold = screen.cursor.italic = False
-        screen.draw(' ' * (remaining_size - len(cwd)))
-        screen.draw(cwd)
-
-    end = screen.cursor.x
-    return end
 
 def truncate_str(input_str, max_length):
     if len(input_str) > max_length:
@@ -184,6 +197,7 @@ def truncate_str(input_str, max_length):
         return input_str[:half] + "…" + input_str[-half:]
     else:
         return input_str
+
 
 def get_cwd():
     cwd = ""
@@ -222,3 +236,79 @@ def extract_rgb(hex_color: int):
     g = (hex_color >> 8) & 0xFF   # Extracts the green component
     b = hex_color & 0xFF          # Extracts the blue component
     return r, g, b
+
+def draw_tab_with_separator(
+    draw_data: DrawData, screen: Screen, tab: TabBarData,
+    before: int, max_tab_length: int, index: int, is_last: bool,
+    extra_data: ExtraData,
+    background: int
+) -> int:
+    screen.cursor.bg = background
+    screen.cursor.fg = as_rgb(draw_data.active_fg.rgb)
+    # screen.cursor.bold = screen.cursor.italic = False
+    # if draw_data.leading_spaces:
+    #     screen.draw(' ' * draw_data.leading_spaces)
+    
+    with open(file_path, "a") as file:
+        # Write the desired content to the file
+        file.write(f'Background: {background}\n')
+        file.write(f'%HOME= : {os.getenv("HOME")}\n')
+
+
+    if tab.is_active:
+        screen.cursor.bg = background
+        screen.cursor.fg = as_rgb(draw_data.active_bg.rgb)
+        screen.draw('')
+        screen.cursor.bg = as_rgb(draw_data.active_bg.rgb)
+        screen.cursor.fg = as_rgb(draw_data.active_fg.rgb)
+    else:
+        screen.cursor.bg = as_rgb(draw_data.inactive_bg.rgb)
+        screen.cursor.fg = as_rgb(draw_data.inactive_fg.rgb)
+
+    
+    draw_title(draw_data, screen, tab, index, max_tab_length)
+
+    if tab.is_active:
+        screen.cursor.bg = background
+        screen.cursor.fg = as_rgb(draw_data.active_bg.rgb)
+        screen.draw('')
+        screen.cursor.bg = background
+        screen.cursor.fg = as_rgb(draw_data.active_fg.rgb)
+    else:
+        screen.cursor.bg = background
+        screen.cursor.fg = as_rgb(draw_data.inactive_fg.rgb)
+
+
+    # trailing_spaces = min(max_tab_length - 1, draw_data.trailing_spaces)
+    # max_tab_length -= trailing_spaces
+    # extra = screen.cursor.x - before - max_tab_length
+    # if extra > 0:
+    #     screen.cursor.x -= extra + 1
+    #     screen.draw('…')
+    # if trailing_spaces:
+    #     screen.draw(' ' * trailing_spaces)
+
+    if not is_last:
+        # screen.cursor.bg = as_rgb(color_as_int(draw_data.inactive_bg))
+        with open(file_path, "a") as file:
+            # Write the desired content to the file
+            file.write(f'Separator color: {screen.cursor.bg}')
+        screen.draw(draw_data.sep)
+
+    if is_last:
+        remaining_size = screen.columns - screen.cursor.x
+        cwd = truncate_str(get_cwd(), remaining_size)
+        
+        with open(file_path, "a") as file:
+            file.write(f'CWD: {get_cwd()}')
+
+        screen.cursor.bg = background
+        screen.cursor.fg = as_rgb(draw_data.inactive_fg.rgb)
+        screen.cursor.bold = screen.cursor.italic = False
+        screen.draw(' ' * (remaining_size - len(cwd)))
+        screen.draw(cwd)
+
+    end = screen.cursor.x
+    return end
+
+
