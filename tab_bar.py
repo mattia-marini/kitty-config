@@ -79,7 +79,7 @@ def draw_tab(
             # if index == 1:
             #     _draw_left_status(screen)
 
-            draw_tab_with_separator(new_draw_data, screen, tab, before, max_title_length, index, is_last, extra_data, base)
+            draw_tab_with_separator(new_draw_data, screen, tab, before, max_title_length, index, is_last, extra_data, as_rgb(base))
             # if is_last:
             #     screen_cursor_x = screen.cursor.x
             #     center_status_length = screen_cursor_x - left_status_length
@@ -251,8 +251,12 @@ def draw_tab_with_separator(
     screen.cursor.bg = background
     screen.cursor.fg = as_rgb(draw_data.active_fg.rgb)
     # screen.cursor.bold = screen.cursor.italic = False
-    if draw_data.leading_spaces:
-        screen.draw(' ' * draw_data.leading_spaces)
+    # if draw_data.leading_spaces:
+    #     screen.draw(' ' * draw_data.leading_spaces)
+    
+    with open(file_path, "a") as file:
+        # Write the desired content to the file
+        file.write(f'Background: {background}')
 
 
     if tab.is_active:
@@ -279,22 +283,26 @@ def draw_tab_with_separator(
         screen.cursor.fg = as_rgb(draw_data.inactive_fg.rgb)
 
 
-    trailing_spaces = min(max_tab_length - 1, draw_data.trailing_spaces)
-    max_tab_length -= trailing_spaces
-    extra = screen.cursor.x - before - max_tab_length
-    if extra > 0:
-        screen.cursor.x -= extra + 1
-        screen.draw('…')
-    if trailing_spaces:
-        screen.draw(' ' * trailing_spaces)
-    end = screen.cursor.x
+    # trailing_spaces = min(max_tab_length - 1, draw_data.trailing_spaces)
+    # max_tab_length -= trailing_spaces
+    # extra = screen.cursor.x - before - max_tab_length
+    # if extra > 0:
+    #     screen.cursor.x -= extra + 1
+    #     screen.draw('…')
+    # if trailing_spaces:
+    #     screen.draw(' ' * trailing_spaces)
+
     if not is_last:
         # screen.cursor.bg = as_rgb(color_as_int(draw_data.inactive_bg))
+        with open(file_path, "a") as file:
+            # Write the desired content to the file
+            file.write(f'Separator color: {screen.cursor.bg}')
         screen.draw(draw_data.sep)
 
-    # if is_last:
-    #     screen.draw(' ' * (screen.columns - screen.cursor.x))
+    if is_last:
+        screen.draw(' ' * (screen.columns - screen.cursor.x))
 
+    end = screen.cursor.x
     return end
 
 
