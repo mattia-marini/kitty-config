@@ -192,7 +192,7 @@ def _draw_right_status(screen: Screen, is_last: bool) -> int:
 
 def truncate_str(input_str, max_length):
     if len(input_str) > max_length:
-        half = max_length // 2
+        half = max_length / 2
         return input_str[:half] + "…" + input_str[-half:]
     else:
         return input_str
@@ -208,7 +208,7 @@ def get_cwd():
 
     cwd_parts = list(Path(cwd).parts)
     if len(cwd_parts) > 1:
-        if cwd_parts[1] == "home":
+        if cwd_parts[1] == "home" or cwd_parts[1] == "Users":
             # replace /home/{{username}}
             cwd_parts = ["~"] + cwd_parts[3:]
             if len(cwd_parts) > 1:
@@ -219,21 +219,12 @@ def get_cwd():
         cwd_parts[0] = "/"
 
     max_length = 10
-    if len(cwd_parts) < 3:
-        cwd = cwd_parts[0] + "/".join(
-            [
-                s if len(s) <= max_length else truncate_str(s, max_length)
-                for s in cwd_parts[1:]
-            ]
-        )
-    else:
-        cwd = "…/" + "/".join(
-            [
-                s if len(s) <= max_length else truncate_str(s, max_length)
-                for s in cwd_parts[-2:]
-            ]
-        )
-
+    cwd = cwd_parts[0] + "/".join(
+        [
+            s if len(s) <= max_length else truncate_str(s, max_length)
+            for s in cwd_parts[1:]
+        ]
+    )
     return cwd
 
 def extract_rgb(hex_color: int):
@@ -300,7 +291,17 @@ def draw_tab_with_separator(
         screen.draw(draw_data.sep)
 
     if is_last:
-        screen.draw(' ' * (screen.columns - screen.cursor.x))
+        remaining_size = screen.columns - screen.cursor.x
+        cwd = truncate_str(get_cwd(), remaining_size)
+        
+        with open(file_path, "a") as file:
+            file.write(f'CWD: {get_cwd()}')
+
+        screen.cursor.bg = background
+        screen.cursor.fg = as_rgb(draw_data.inactive_fg.rgb)
+        screen.cursor.bold = screen.cursor.italic = False
+        screen.draw(' ' * (remaining_size - len(cwd)))
+        screen.draw(cwd)
 
     end = screen.cursor.x
     return end
