@@ -1,4 +1,5 @@
 import math
+import os
 from pathlib import Path
 from kitty.boss import get_boss
 from kitty.fast_data_types import Screen, get_options, Color
@@ -207,8 +208,11 @@ def get_cwd():
             cwd = window.cwd_of_child
 
     cwd_parts = list(Path(cwd).parts)
+    with open(file_path, "a") as file:
+        file.write(f'First path part: {Path(*cwd_parts[:3])}\n')
+        file.write(f'Parts: {cwd_parts}\n')
     if len(cwd_parts) > 1:
-        if cwd_parts[1] == "home" or cwd_parts[1] == "Users":
+        if cwd_parts[1] == "home" or str(Path(*cwd_parts[:3])) == os.getenv("HOME") and len(cwd_parts) > 3:
             # replace /home/{{username}}
             cwd_parts = ["~"] + cwd_parts[3:]
             if len(cwd_parts) > 1:
@@ -247,7 +251,8 @@ def draw_tab_with_separator(
     
     with open(file_path, "a") as file:
         # Write the desired content to the file
-        file.write(f'Background: {background}')
+        file.write(f'Background: {background}\n')
+        file.write(f'%HOME= : {os.getenv("HOME")}\n')
 
 
     if tab.is_active:
