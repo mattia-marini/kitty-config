@@ -24,8 +24,6 @@ left_status_length = 0
 
 
 file_path = "/Users/mattia/Desktop/log.txt"
-with open(file_path, "a") as file:
-    file.write("Script loaded\n")
 
 def draw_tab(
     draw_data: DrawData,
@@ -44,75 +42,28 @@ def draw_tab(
     global active_tab_layout_name
     global active_tab_num_windows
 
-    with open(file_path, "a") as file:
-        # Write the desired content to the file
-        file.write("Draw tab\n")
-        try:
-            # active_tab_idx = get_boss().active_tab_manager.active_tab_idx
-            # curr_tab_id = tab.tab_id
-            # file.write(str(get_boss().active_tab_manager.active_tab_idx))
-            output = get_boss().call_remote_control(None, ('get-colors', f'--match=recent:0'))
+    try:
+        # active_tab_idx = get_boss().active_tab_manager.active_tab_idx
+        # curr_tab_id = tab.tab_id
+        output = get_boss().call_remote_control(None, ('get-colors', f'--match=recent:0'))
 
+        lines = output.split('\n')
+        background_value = None
+        
+        for line in lines:
+            if line.startswith('background'):
+                background_value = line.split()[1]
+                break
 
+        
+        base = int(background_value[1:], 16)
+        r,g,b = extract_rgb(base)
+        base_color = Color(r,g,b)
 
-            lines = output.split('\n')
-            background_value = None
-            
-            for line in lines:
-                if line.startswith('background'):
-                    background_value = line.split()[1]
-                    break
+        new_draw_data = draw_data._replace(inactive_bg=base_color)
 
-            
-            base = int(background_value[1:], 16)
-            r,g,b = extract_rgb(base)
-            base_color = Color(r,g,b)
-
-            # file.write(f'Active tab color: {output}')
-            new_draw_data = draw_data._replace(inactive_bg=base_color)
-            # file.write(f'Drawing with new color:\t{str(new_draw_data.inactive_bg.rgb)}\n')
-            file.write(f'active_fg: {new_draw_data.active_fg}\n')
-
-            # if tab.is_active:
-            #     active_tab_layout_name = tab.layout_name
-            #     active_tab_num_windows = tab.num_windows
-            #
-            # if index == 1:
-            #     _draw_left_status(screen)
-
-            draw_tab_with_separator(new_draw_data, screen, tab, before, max_title_length, index, is_last, extra_data, as_rgb(base))
-            # if is_last:
-            #     screen_cursor_x = screen.cursor.x
-            #     center_status_length = screen_cursor_x - left_status_length
-            #     leading_spaces = math.ceil(
-            #         (screen.columns - left_status_length * 2 - center_status_length) / 2
-            #     )
-            #     screen.cursor.x = left_status_length
-            #     screen.insert_characters(leading_spaces)
-            #     # TODO: fix tab click handlers
-            #     # self.cell_ranges = [(s + leading_spaces, e + leading_spaces) for (s, e) in self.cell_ranges]
-            #     screen.cursor.x = screen_cursor_x + leading_spaces
-            #
-            # if is_last:
-            #     _draw_right_status(screen, is_last)
-
-
-            # draw_data.inactive_bg = base_color
-
-            # file.write(f'Original color:\t{str(draw_data.inactive_bg.rgb)}\n')
-            # file.write(f'Current tab window bg:\t{background_value}\n')
-            # file.write(str(r))
-            # file.write(" ")
-            # file.write(str(g))
-            # file.write(" ")
-            # file.write(str(b))
-            # file.write("\n")
-            # file.write(str(int(Color(r,g,b))))
-            # file.write("\n")
-            # file.write(str(base))
-            # file.write("\n")
-        except Exception as e:
-             file.write(f"Error: {e}\n")
+        draw_tab_with_separator(new_draw_data, screen, tab, before, max_title_length, index, is_last, extra_data, as_rgb(base))
+    except Exception as e:
 
 
 
@@ -130,11 +81,6 @@ def draw_tab_with_separator(
 
     if index==1:
         screen.draw(draw_data.sep)
-    
-    with open(file_path, "a") as file:
-        # Write the desired content to the file
-        file.write(f'Background: {background}\n')
-        file.write(f'%HOME= : {os.getenv("HOME")}\n')
 
 
     if tab.is_active:
@@ -180,7 +126,7 @@ def draw_tab_with_separator(
 
 def truncate_str(input_str, max_length):
     if len(input_str) > max_length:
-        half = max_length / 2
+        half = max_length // 2
         return input_str[:half] + "…" + input_str[-half:]
     else:
         return input_str
@@ -194,9 +140,7 @@ def get_cwd():
             cwd = window.cwd_of_child
 
     cwd_parts = list(Path(cwd).parts)
-    with open(file_path, "a") as file:
-        file.write(f'First path part: {Path(*cwd_parts[:3])}\n')
-        file.write(f'Parts: {cwd_parts}\n')
+
     if len(cwd_parts) > 1:
         if cwd_parts[1] == "home" or str(Path(*cwd_parts[:3])) == os.getenv("HOME") and len(cwd_parts) > 3:
             # replace /home/{{username}}
