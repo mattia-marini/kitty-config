@@ -11,6 +11,17 @@ from kitty.tab_bar import (
     draw_title
 )
 
+def createLogDir():
+    xdg_state_home = os.getenv("XDG_STATE_HOME", Path.home() / ".local" / "state")
+    
+    # Define the log directory path
+    log_dir = Path(xdg_state_home) / "kitty"
+    
+    # Create the directory (if it doesn't exist)
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    return log_dir
+
 opts = get_options()
 
 lavender = as_rgb(int("B4BEFE", 16))
@@ -21,9 +32,8 @@ layout_icon = ""
 active_tab_layout_name = ""
 active_tab_num_windows = 1
 left_status_length = 0
+log_dir = createLogDir()
 
-
-file_path = "/Users/mattia/Desktop/log.txt"
 
 def draw_tab(
     draw_data: DrawData,
@@ -64,6 +74,8 @@ def draw_tab(
 
         draw_tab_with_separator(new_draw_data, screen, tab, before, max_title_length, index, is_last, extra_data, as_rgb(base))
     except Exception as e:
+        with open(log_dir / "tab_bar.log", "a") as f:
+            f.write(f"Error: {e}\n")
 
 
 
@@ -166,3 +178,5 @@ def extract_rgb(hex_color: int):
     g = (hex_color >> 8) & 0xFF   # Extracts the green component
     b = hex_color & 0xFF          # Extracts the blue component
     return r, g, b
+
+
