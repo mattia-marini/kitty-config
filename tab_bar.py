@@ -15,13 +15,22 @@ class Logger:
     def __init__(self, pipe_path: str = "/tmp/kitty_debug"):
         self.pipe_path = pipe_path
         if not os.path.exists(self.pipe_path):
-            os.mkfifo(self.pipe_path)  # Ensure the named pipe exists
+            os.mkfifo(self.pipe_path)
+        self.clear()
+        self.log("Logger initialized\n")
 
     def log(self, msg: str):
         with open(self.pipe_path, "w") as pipe:
             pipe.write(msg)
             pipe.flush()
 
+    def inspect(self, obj: object):
+        for key, value in vars(logger).items():
+            self.log(f"{key}: {type(value).__name__}\n")
+
+    def clear(self):
+        self.log("\033[2J\033[H") #tput clear
+        self.log("\033[3J\033[0;0H") #resets cursor
 
 logger = Logger("/tmp/kitty_debug")
 
@@ -60,6 +69,7 @@ def draw_tab(
     extra_data: ExtraData,
 ) -> int:
 
+    logger.inspect(draw_data)
     
     # Open the file in write mode
     global base
