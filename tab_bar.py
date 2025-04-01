@@ -11,6 +11,20 @@ from kitty.tab_bar import (
     draw_title
 )
 
+class Logger:
+    def __init__(self, pipe_path: str = "/tmp/kitty_debug"):
+        self.pipe_path = pipe_path
+        if not os.path.exists(self.pipe_path):
+            os.mkfifo(self.pipe_path)  # Ensure the named pipe exists
+
+    def log(self, msg: str):
+        with open(self.pipe_path, "w") as pipe:
+            pipe.write(msg)
+            pipe.flush()
+
+
+logger = Logger("/tmp/kitty_debug")
+
 def createLogDir():
     xdg_state_home = os.getenv("XDG_STATE_HOME", Path.home() / ".local" / "state")
     
@@ -72,7 +86,7 @@ def draw_tab(
 
         new_draw_data = draw_data._replace(inactive_bg=base_color)
 
-        draw_tab_with_separator(new_draw_data, screen, tab, before, max_title_length, index, is_last, extra_data, as_rgb(base))
+        draw_tab_with_separator(new_draw_data, screen, tab, before, screen.columns / 4, index, is_last, extra_data, as_rgb(base))
     except Exception as e:
         with open(log_dir / "tab_bar.log", "a") as f:
             f.write(f"Error: {e}\n")
@@ -124,7 +138,7 @@ def draw_tab_with_separator(
         screen.draw(draw_data.sep)
 
     if is_last:
-        remaining_size = screen.columns - screen.cursor.x
+        remaining_size = max(screen.columns - screen.cursor.x, 0)
         cwd = truncate_str(get_cwd() + draw_data.sep , remaining_size) 
 
         screen.cursor.bg = background
