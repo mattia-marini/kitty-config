@@ -6,12 +6,20 @@ class Logger:
     def __init__(self, pipe_path: str = "/tmp/kitty_debug"):
         self.pipe_path = pipe_path
         if not os.path.exists(self.pipe_path):
-            os.mkfifo(self.pipe_path)  # Ensure the named pipe exists
+            os.mkfifo(self.pipe_path)
+        self.clear()
+        self.log("Logger initialized\n")
+
+
 
     def log(self, msg: str):
-        with open(self.pipe_path, "w") as pipe:
-            pipe.write(msg)
-            pipe.flush()
+        try:
+            fd = os.open(self.pipe_path, os.O_WRONLY | os.O_NONBLOCK)
+            with os.fdopen(fd, "w") as pipe:
+                pipe.write(msg)
+                pipe.flush()
+        except OSError as e:
+            print(f"Could not write to pipe. Error: {e}")
 
     def inspect(self, obj: object):
         for key, value in vars(logger).items():
