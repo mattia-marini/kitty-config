@@ -5,9 +5,6 @@
 #
 # foreground #DEDDDD
 # background #29222e
-
-shell /usr/local/bin/fish
-
 background_opacity 1
 
 enabled_layouts tall:bias=50;full_size=1;mirrored=false
@@ -22,10 +19,10 @@ tab_bar_style custom
 tab_separator "  "
 tab_title_template "{sup.index} 󰓩 {title}{bell_symbol}{activity_symbol} "
 active_tab_title_template "{sup.index} 󰓩 {title}{bell_symbol}{activity_symbol} "
-active_tab_foreground #1E1E2E
-inactive_tab_foreground #CCCCCC
-tab_bar_background #1E1E2E
-tab_bar_align left
+# active_tab_foreground #1E1E2E
+# inactive_tab_foreground #CCCCCC
+# tab_bar_background #1E1E2E
+# tab_bar_align left
 
 
 synchronized_update true
@@ -73,38 +70,8 @@ map cmd+j resize_window narrower 5
 map cmd+i resize_window taller
 map cmd+u resize_window shorter
 
-# map cmd+l next_window
+map cmd+l next_window
 map cmd+h previous_window
-
-
-
-# Left arrow
-map ctrl+h send_text all \x1b[D
-
-# Right arrow
-map ctrl+l send_text all \x1b[C
-
-# Up arrow
-map ctrl+k send_text all \x1b[A
-
-# Down arrow
-map ctrl+j send_text all \x1b[B
-
-
-#
-# Output a word and move the cursor to the start of the line (like typing and pressing Home)
-# map ctrl+alt+a send_text normal Word\e[H
-# map ctrl+alt+a send_text application Word\eOH
-# Run a command at a shell prompt (like typing the command and pressing Enter)
-# map cmd+alt+a send_text normal,application some command with arguments\r
-#
-# Output a word and move the cursor to the start of the line (like typing and pressing Home)
-# map ctrl+alt+a send_text normal Word\e[H
-# map ctrl+alt+a send_text application Word\eOH
-# map ctrl+alt+a send_text normal,application some command with arguments\r
-
---------------------
-
 # vim:fileencoding=utf-8:foldmethod=marker
 
 #: Fonts {{{
@@ -2355,10 +2322,6 @@ resize_draw_strategy size
 
 
 # BEGIN_KITTY_THEME
-# Base2Tone Desert Dark
+# Afterglow
 include current-theme.conf
-<<<<<<< Updated upstream
 # END_KITTY_THEME
-=======
-# END_KITTY_THEME
->>>>>>> Stashed changes

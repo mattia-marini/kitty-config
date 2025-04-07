@@ -19,36 +19,44 @@ class Logger:
         self.clear()
         self.log("Logger initialized\n")
 
-
-
     def log(self, msg: str):
-        try:
-            fd = os.open(self.pipe_path, os.O_WRONLY | os.O_NONBLOCK)
-            with os.fdopen(fd, "w") as pipe:
-                pipe.write(msg)
-                pipe.flush()
-        except OSError as e:
-            print(f"Could not write to pipe. Error: {e}")
+        with open(self.pipe_path, "w") as pipe:
+            pipe.write(msg)
+            pipe.flush()
 
     def inspect(self, obj: object):
-        attributes = {}
-        for attr in dir(obj):
-            if attr.startswith('_'):
-                continue
-            try:
-                value = getattr(obj, attr)
-                attributes[attr] = type(value).__name__
-            except Exception as e:
-                attributes[attr] = f"<error: {e}>"
-    
-        formatted = "{\n" + "".join(f"    {k}: {v},\n" for k, v in attributes.items()) + "}"
-        self.log(formatted)
+        for key, value in vars(logger).items():
+            self.log(f"{key}: {type(value).__name__}\n")
 
     def clear(self):
         self.log("\033[2J\033[H") #tput clear
         self.log("\033[3J\033[0;0H") #resets cursor
 
 logger = Logger("/tmp/kitty_debug")
+
+def createLogDir():
+    xdg_state_home = os.getenv("XDG_STATE_HOME", Path.home() / ".local" / "state")
+    
+    # Define the log directory path
+    log_dir = Path(xdg_state_home) / "kitty"
+    
+    # Create the directory (if it doesn't exist)
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    return log_dir
+
+opts = get_options()
+
+lavender = as_rgb(int("B4BEFE", 16))
+surface1 = as_rgb(int("45475A", 16))
+base = as_rgb(int("1E1E2E", 16))
+window_icon = ""
+layout_icon = ""
+active_tab_layout_name = ""
+active_tab_num_windows = 1
+left_status_length = 0
+log_dir = createLogDir()
+
 
 def draw_tab(
     draw_data: DrawData,
@@ -61,30 +69,41 @@ def draw_tab(
     extra_data: ExtraData,
 ) -> int:
 
-    # logger.inspect(draw_data)
+    logger.inspect(draw_data)
     
     # Open the file in write mode
+    global base
+    global active_tab_layout_name
+    global active_tab_num_windows
 
     try:
-        if tab.is_active:
-            screen.cursor.bg = as_rgb(draw_data.active_bg.rgb)
-            screen.cursor.fg = as_rgb(draw_data.active_bg.rgb)
-        else:
-            screen.cursor.bg = as_rgb(draw_data.inactive_bg.rgb)
-            screen.cursor.fg = as_rgb(draw_data.inactive_bg.rgb)
+        # active_tab_idx = get_boss().active_tab_manager.active_tab_idx
+        # curr_tab_id = tab.tab_id
+        output = get_boss().call_remote_control(None, ('get-colors', f'--match=recent:0'))
 
-        screen.draw('')
-        logger.inspect(extra_data)
-        screen.draw('')
-    except Exception as e:
-        logger.log(f"{e}\n")
+        lines = output.split('\n')
+        background_value = None
         
+        for line in lines:
+            if line.startswith('background'):
+                background_value = line.split()[1]
+                break
+
+        
+        base = int(background_value[1:], 16)
+        r,g,b = extract_rgb(base)
+        base_color = Color(r,g,b)
+
+        new_draw_data = draw_data._replace(inactive_bg=base_color)
+
+        draw_tab_with_separator(new_draw_data, screen, tab, before, screen.columns / 4, index, is_last, extra_data, as_rgb(base))
+    except Exception as e:
+        with open(log_dir / "tab_bar.log", "a") as f:
+            f.write(f"Error: {e}\n")
 
 
 
     return screen.cursor.x
-
-
 
 def draw_tab_with_separator(
     draw_data: DrawData, screen: Screen, tab: TabBarData,

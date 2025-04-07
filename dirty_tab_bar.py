@@ -11,7 +11,7 @@ from kitty.tab_bar import (
     draw_title
 )
 
-opts = get_options()
+# opts = get_options()
 
 lavender = as_rgb(int("B4BEFE", 16))
 surface1 = as_rgb(int("45475A", 16))
