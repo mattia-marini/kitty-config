@@ -2,6 +2,7 @@
 # ctrl + cmd + , to reload
 
 shell /usr/local/bin/fish
+# shell /bin/zsh
 background_opacity 1
 enabled_layouts tall:bias=50;full_size=1;mirrored=false
 
@@ -16,7 +17,6 @@ active_tab_title_template  "{fmt.bg.default_bg}{fmt.fg.active_bg} {fmt.fg.tab
 
 sync_to_monitor yes
 
-
 editor nvim
 allow_remote_control yes
 listen_on unix:/tmp/kitty
@@ -30,21 +30,24 @@ hide_window_decorations no
 
 
 # resize_debounce_time 1
-resize_draw_strategy scale
+resize_draw_strategy size
+cursor_blink_interval 0
 
 
-remember_window_size  yes
-initial_window_width  640
-initial_window_height 400
-
-#resize_in_steps yes 
-window_margin_width 0
-placement_strategy center
-window_padding_width 0
-window_padding_height 0 
+# remember_window_size  yes
+# initial_window_width  640
+# initial_window_height 400
+                                                               
+resize_in_steps yes 
+# window_margin_width 0
+# placement_strategy center
+# window_padding_width 0
+# window_padding_height 0 
 
 
 mouse_hide_wait 1
+
+cursor_blink_interval 0
 
 
 map cmd+k resize_window wider 5
@@ -53,8 +56,13 @@ map cmd+j resize_window narrower 5
 map cmd+i resize_window taller
 map cmd+u resize_window shorter
 
-# map cmd+l next_window
+map cmd+l next_window 
 map cmd+h previous_window
+
+# cursor_trail 1
+# cursor_trail_decay 0.01 0.1
+# cursor_trail_start_threshold 0
+# vim:fileencoding=utf-8:foldmethod=marker
 
 
 
@@ -70,9 +78,10 @@ map ctrl+k send_text all \x1b[A
 # Down arrow
 map ctrl+j send_text all \x1b[B
 
+map ctrl+o goto_tab -1
 
 # BEGIN_KITTY_THEME
-# Everforest
+# Gruvbox-Material
 include current-theme.conf
 # END_KITTY_THEME
 #
