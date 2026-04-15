@@ -41,7 +41,6 @@ font_size 16.0
 
 # resize_debounce_time 1
 # resize_draw_strategy size
-# resize_debounce_time 1 1
 cursor_blink_interval 0
 
 
